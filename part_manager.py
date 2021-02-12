@@ -1,19 +1,56 @@
 from tkinter import *
+from tkinter import messagebox
+from db import Database
+
+db = Database('store.db')
 
 def populate_list():
-    pass
+    parts_list.delete(0, END)
+    for row in db.fetch():
+        parts_list.insert(END, row)
+
+def select_item(event):
+    try:
+        global selected_item
+        index = parts_list.curselection()[0]
+        selected_item = parts_list.get(index)
+
+        part_text.set(selected_item[1])
+        customer_text.set(selected_item[2])
+        retailer_text.set(selected_item[3])
+        price_text.set(selected_item[4])
+    except IndexError:
+        pass
 
 def add_item():
-    pass
+    if part_text.get() == '' or customer_text.get() == '' or retailer_text.get() == '' or price_text.get() == '':
+        messagebox.showerror('Required Fields', 'Please include all fields!')
+        return
+
+    db.insert(part_text.get(), customer_text.get(), retailer_text.get(), price_text.get())
+    parts_list.delete(0, END)
+    clear_text()
+    populate_list()
 
 def remove_item():
-    pass
+    db.remove(selected_item[0])
+    clear_text()
+    populate_list()
 
 def update_item():
-    pass
+    db.update(selected_item[0], part_text.get(), customer_text.get(), retailer_text.get(), price_text.get())
+    populate_list()
 
 def clear_text():
-    pass
+    part_text.set('')
+    customer_text.set('')
+    retailer_text.set('')
+    price_text.set('')
+
+    # THE OTHER WAY TO DO IT
+    # part_entry.delete(0, END)
+
+
 
 # Create window object
 app = Tk()
@@ -58,6 +95,9 @@ scrollbar.grid(row=3, column=3)
 parts_list.configure(yscrollcommand=scrollbar.set)
 scrollbar.configure(command=parts_list.yview)
 
+# Bind select
+parts_list.bind('<<ListboxSelect>>', select_item)
+
 # Buttons
 add_btn = Button(app, text='Add Part', width=12, command=add_item)
 add_btn.grid(row=2, column=0, pady=20)
@@ -68,7 +108,7 @@ remove_btn.grid(row=2, column=1)
 update_btn = Button(app, text='Update Part', width=12, command=update_item)
 update_btn.grid(row=2, column=2)
 
-clear_btn = Button(app, text='Clear Part', width=12, command=clear_text)
+clear_btn = Button(app, text='Clear Inputs', width=12, command=clear_text)
 clear_btn.grid(row=2, column=3)
 
 app.title('Part Manager')
